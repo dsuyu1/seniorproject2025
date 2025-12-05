@@ -13,7 +13,7 @@ from huggingface_hub import hf_hub_download
 
 # -------- YOLO model load --------
 print(" Loading local YOLO model: best.pt ...")
-model = YOLO("best.pt") 
+model = YOLO("best_SeniorProj.pt") 
 print(" Local YOLO model loaded successfully.")
 
 
