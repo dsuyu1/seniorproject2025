@@ -175,14 +175,7 @@ ls -la bevel/
 ```
 
 ## 4. Setup Python Virtual Environment
-If you haven't installed python yet, install it now:
-```console
-# update packages first
-sudo apt update
-
-# install
-sudo apt install python3 python3-pip
-```
+You might have to run this installation command: `sudo apt install python3.11-venv`
 
 ```console
 cd ~/fabric-video-privacy
@@ -197,3 +190,5 @@ source bevel-env/bin/activate
 # Verify Python is from the virtual environment
 which python
 ```
+
+
