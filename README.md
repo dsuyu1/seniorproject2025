@@ -20,4 +20,4 @@ yolo train model=\<your model weights\> data=face.yaml imgsz=640 epochs=100 batc
 ```
 
 ## Midterm Poster 
-![Midterm poster presentation](Slide1.jpg)
+![Midterm poster presentation](midterm-poster.jpg)
