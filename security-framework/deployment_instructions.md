@@ -1,4 +1,4 @@
-# Deploying the Privacy-First Network (Hyperledger Fabric, Kubernetes, Helm, Bevel, Vault)
+# Deploying the Privacy-First Network on Debian (Hyperledger Fabric, Kubernetes, Helm, Bevel, Vault)
 ## Introduction
 - Hyperledger Fabric: Hyperledger Fabric is an open-source enterprise-grade permissioned distributed ledger technology (DLT) platform, designed for use in enterprise contexts, that delivers some key differentiating capabilities over other popular distributed ledger or blockchain platforms.
 - Kubernetes: Kubernetes is an open source container orchestration engine for automating deployment, scaling, and management of containerized applications. The open source project is hosted by the Cloud Native Computing Foundation (CNCF). 
@@ -71,7 +71,7 @@
 
 (None specified)
 
-## 0. Installing Requirements
+## 0. Installing Requirements (x86_64)
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -113,7 +113,6 @@ sudo apt install -y build-essential
 # Start minikube
 minikube start --memory=8192 --cpus=4 --driver=docker
 ```
-
 
 ## 1 Minikube
 ### 1.1 Start Minikube
