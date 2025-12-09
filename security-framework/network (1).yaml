@@ -1,0 +1,655 @@
+# network.yaml - Zero-Trust Edge Camera Architecture - CORRECTED VERSION
+## Based on: "Zero-Trust Edge Camera for Privacy Preserving Surveillance"
+## 4 Stakeholder Roles with Hybrid On-chain/Off-chain Model
+## GitHub Repo: https://github.com/dsuyu1/seniorproject2025.git
+## 
+## IMPORTANT: Replace VAULT_ROOT_TOKEN with actual token from:
+##   kubectl exec vault-0 -n vault -- cat /root/.vault-token
+##
+## IMPORTANT: Replace PASSWORD with GitHub Personal Access Token from:
+##   https://github.com/settings/tokens (repo scope required)
+
+---
+network:
+  type: fabric
+  version: 2.5.3
+  
+  env:
+    type: "operator"
+    proxy: istio
+    retry_count: 20
+    external_dns: enabled
+    
+  docker:
+    url: "docker.io"
+    username: ""
+    password: ""
+
+  # ============================================
+  # STAKEHOLDER 1: CLIENT (Data Requestor)
+  # Role: CCTV cameras, smartphone apps, IoT sensors
+  # On-chain: Send access requests, receive tickets
+  # Off-chain: Perform face blurring, encryption, ZKP verification
+  # ============================================
+  organizations:
+    - organization:
+        name: clients
+        country: US
+        state: Texas
+        location: "Edinburg"
+        subject: "O=Clients,OU=DataRequestors,L=Edinburg,ST=Texas,C=US"
+        
+        k8s:
+          region: "us-west-1"
+          context: "minikube"
+          config_file: "/home/penguinpal88/.kube/config"
+          
+        vault:
+          url: "http://vault.vault:8200"
+          root_token: "VAULT_ROOT_TOKEN"  # REPLACE WITH ACTUAL TOKEN
+          secret_path: "secretsv2"
+          
+        gitops:
+          git_protocol: "https"
+          git_url: "https://github.com/dsuyu1/seniorproject2025.git"
+          branch: "main"
+          release_dir: "platforms/hyperledger-fabric/releases/dev"
+          chart_source: "platforms/hyperledger-fabric/charts"
+          username: "dsuyu1"
+          password: "GITHUB_PAT"  # REPLACE WITH PERSONAL ACCESS TOKEN
+          private_key: ""
+          
+        services:
+          ca:
+            name: ca-client
+            subject: "/C=US/ST=Texas/L=Edinburg/O=Clients/CN=ca.clients.zta-edge.local"
+            
+          peers:
+          - peer:
+              name: peer0
+              type: anchor
+              gossippeeraddress: "peer1.clients.zta-edge.local:7051"
+          - peer:
+              name: peer1
+              type: worker
+
+    # ============================================
+    # STAKEHOLDER 2: POLICY ADMINISTRATOR
+    # Role: Decision-maker with control over ZTA policy decisions
+    # On-chain: Define & enforce policies, issue certificates, manage access control
+    # Off-chain: Policy evaluation, credential generation, threat analysis
+    # ============================================
+    - organization:
+        name: policy-admin
+        country: US
+        state: Texas
+        location: "Edinburg"
+        subject: "O=PolicyAdmin,OU=PolicyDecisionMakers,L=Edinburg,ST=Texas,C=US"
+        
+        k8s:
+          region: "us-west-1"
+          context: "minikube"
+          config_file: "/home/penguinpal88/.kube/config"
+          
+        vault:
+          url: "http://vault.vault:8200"
+          root_token: "VAULT_ROOT_TOKEN"  # REPLACE WITH ACTUAL TOKEN
+          secret_path: "secretsv2"
+          
+        gitops:
+          git_protocol: "https"
+          git_url: "https://github.com/dsuyu1/seniorproject2025.git"
+          branch: "main"
+          release_dir: "platforms/hyperledger-fabric/releases/dev"
+          chart_source: "platforms/hyperledger-fabric/charts"
+          username: "dsuyu1"
+          password: "GITHUB_PAT"  # REPLACE WITH PERSONAL ACCESS TOKEN
+          private_key: ""
+          
+        services:
+          ca:
+            name: ca-policy-admin
+            subject: "/C=US/ST=Texas/L=Edinburg/O=PolicyAdmin/CN=ca.policy-admin.zta-edge.local"
+            
+          peers:
+          - peer:
+              name: peer0
+              type: anchor
+              gossippeeraddress: "peer1.policy-admin.zta-edge.local:7051"
+          - peer:
+              name: peer1
+              type: worker
+
+    # ============================================
+    # STAKEHOLDER 3: SERVER ADMINISTRATOR
+    # Role: Manages data resources & server infrastructure
+    # On-chain: Store hashes, manage IPFS content addresses, track resources
+    # Off-chain: IPFS storage, encryption/decryption, key management, video processing
+    # ============================================
+    - organization:
+        name: server-admin
+        country: US
+        state: Texas
+        location: "Edinburg"
+        subject: "O=ServerAdmin,OU=ServerManagers,L=Edinburg,ST=Texas,C=US"
+        
+        k8s:
+          region: "us-west-1"
+          context: "minikube"
+          config_file: "/home/penguinpal88/.kube/config"
+          
+        vault:
+          url: "http://vault.vault:8200"
+          root_token: "VAULT_ROOT_TOKEN"  # REPLACE WITH ACTUAL TOKEN
+          secret_path: "secretsv2"
+          
+        gitops:
+          git_protocol: "https"
+          git_url: "https://github.com/dsuyu1/seniorproject2025.git"
+          branch: "main"
+          release_dir: "platforms/hyperledger-fabric/releases/dev"
+          chart_source: "platforms/hyperledger-fabric/charts"
+          username: "dsuyu1"
+          password: "GITHUB_PAT"  # REPLACE WITH PERSONAL ACCESS TOKEN
+          private_key: ""
+          
+        services:
+          ca:
+            name: ca-server-admin
+            subject: "/C=US/ST=Texas/L=Edinburg/O=ServerAdmin/CN=ca.server-admin.zta-edge.local"
+            
+          peers:
+          - peer:
+              name: peer0
+              type: anchor
+              gossippeeraddress: "peer1.server-admin.zta-edge.local:7051"
+          - peer:
+              name: peer1
+              type: worker
+
+    # ============================================
+    # STAKEHOLDER 4: AUDIT SERVER
+    # Role: Tracing authority for investigations & compliance
+    # On-chain: Access complete audit logs, ticket history, access attempts
+    # Off-chain: ML-based anomaly detection, behavioral analytics, breach investigation
+    # ============================================
+    - organization:
+        name: audit-server
+        country: US
+        state: Texas
+        location: "Edinburg"
+        subject: "O=AuditServer,OU=TracingAuthority,L=Edinburg,ST=Texas,C=US"
+        
+        k8s:
+          region: "us-west-1"
+          context: "minikube"
+          config_file: "/home/penguinpal88/.kube/config"
+          
+        vault:
+          url: "http://vault.vault:8200"
+          root_token: "VAULT_ROOT_TOKEN"  # REPLACE WITH ACTUAL TOKEN
+          secret_path: "secretsv2"
+          
+        gitops:
+          git_protocol: "https"
+          git_url: "https://github.com/dsuyu1/seniorproject2025.git"
+          branch: "main"
+          release_dir: "platforms/hyperledger-fabric/releases/dev"
+          chart_source: "platforms/hyperledger-fabric/charts"
+          username: "dsuyu1"
+          password: "GITHUB_PAT"  # REPLACE WITH PERSONAL ACCESS TOKEN
+          private_key: ""
+          
+        services:
+          ca:
+            name: ca-audit
+            subject: "/C=US/ST=Texas/L=Edinburg/O=AuditServer/CN=ca.audit-server.zta-edge.local"
+            
+          peers:
+          - peer:
+              name: peer0
+              type: anchor
+              gossippeeraddress: "peer1.audit-server.zta-edge.local:7051"
+          - peer:
+              name: peer1
+              type: worker
+
+  # ============================================
+  # ORDERING SERVICE (Shared - creates blocks)
+  # All 4 stakeholders trust this neutral orderer
+  # ============================================
+  orderers:
+    - organization:
+        name: orderer
+        country: US
+        state: Texas
+        location: "Edinburg"
+        subject: "O=Orderer,OU=OrderingService,L=Edinburg,ST=Texas,C=US"
+        
+        k8s:
+          region: "us-west-1"
+          context: "minikube"
+          config_file: "/home/penguinpal88/.kube/config"
+          
+        vault:
+          url: "http://vault.vault:8200"
+          root_token: "VAULT_ROOT_TOKEN"  # REPLACE WITH ACTUAL TOKEN
+          secret_path: "secretsv2"
+          
+        gitops:
+          git_protocol: "https"
+          git_url: "https://github.com/dsuyu1/seniorproject2025.git"
+          branch: "main"
+          release_dir: "platforms/hyperledger-fabric/releases/dev"
+          chart_source: "platforms/hyperledger-fabric/charts"
+          username: "dsuyu1"
+          password: "GITHUB_PAT"  # REPLACE WITH PERSONAL ACCESS TOKEN
+          private_key: ""
+          
+        services:
+          orderers:
+          - orderer:
+              name: orderer1
+              type: leader
+
+  # ============================================
+  # CONSORTIUM CONFIGURATION (Required for channels)
+  # ============================================
+  consortiums:
+    - consortium:
+        name: EdgeCameraConsortium
+        organizations:
+          - clients
+          - policy-admin
+          - server-admin
+          - audit-server
+
+  # ============================================
+  # CHANNEL CONFIGURATION
+  # ============================================
+  channels:
+    - channel:
+        name: zta-edge-channel
+        consortium: EdgeCameraConsortium
+        orderer: orderer
+        
+        # Participant configuration
+        participants:
+          - organization:
+              name: clients
+              type: creator  # Creates the channel
+              peers:
+                - peer0
+                - peer1
+              ordererAddress: orderer1.orderer.zta-edge.local:7050
+              
+          - organization:
+              name: policy-admin
+              type: joiner
+              peers:
+                - peer0
+                - peer1
+                
+          - organization:
+              name: server-admin
+              type: joiner
+              peers:
+                - peer0
+                - peer1
+                
+          - organization:
+              name: audit-server
+              type: joiner
+              peers:
+                - peer0
+                - peer1
+        
+        # Endorsement policies for chaincode functions
+        endorsers:
+          # Identity Registration: Client OR PolicyAdmin can endorse
+          - name: RegisterIdentity
+            creator: clients
+            endorsement_policy: OR('Clients.peer', 'PolicyAdmin.peer')
+            
+          # Access Request: Requires Client + PolicyAdmin + AuditServer
+          - name: RequestAccessTicket
+            creator: clients
+            endorsement_policy: AND('Clients.peer', 'PolicyAdmin.peer', 'AuditServer.peer')
+            
+          # Ticket Issuance: PolicyAdmin AND ServerAdmin must approve
+          - name: IssueTicket
+            creator: policy-admin
+            endorsement_policy: AND('PolicyAdmin.peer', 'ServerAdmin.peer')
+            
+          # IPFS Hash Storage: ServerAdmin AND AuditServer for integrity
+          - name: StoreVideoHash
+            creator: server-admin
+            endorsement_policy: AND('ServerAdmin.peer', 'AuditServer.peer')
+            
+          # Certificate Revocation: Critical operation needs PolicyAdmin + AuditServer
+          - name: RevokeCertificate
+            creator: policy-admin
+            endorsement_policy: AND('PolicyAdmin.peer', 'AuditServer.peer')
+            
+          # Audit Log Access: Read-only for AuditServer
+          - name: QueryAccessLogs
+            creator: audit-server
+            endorsement_policy: OR('AuditServer.peer')
+            
+        genesis:
+          name: OrdererGenesis
+          
+        # Chaincode deployment configuration
+        chaincodes:
+          - chaincode:
+              name: zta-video-storage
+              version: "1.0"
+              lang: golang
+              repository:
+                url: "https://github.com/dsuyu1/seniorproject2025.git"
+                branch: main
+                path: chaincode
+              arguments: ''
+              endorsements: ''
+              
+              # Endorsement policy at chaincode level (default for all functions)
+              endorsement_policy: "OR('Clients.peer', 'PolicyAdmin.peer', 'ServerAdmin.peer', 'AuditServer.peer')"
+
+---
+
+# ============================================
+# SYSTEM ARCHITECTURE DOCUMENTATION
+# ============================================
+
+# ============================================
+# DEPLOYMENT FLOW
+# ============================================
+
+# STEP 1: CLIENT registers device
+# ┌────────────────────────────────────────┐
+# │ Client (IoT device/camera/app)         │
+# │ • Generates public/private key pair    │
+# │ • Submits enrollment to CA-Client      │
+# └────────────────────────────────────────┘
+#              ↓ On-chain
+# ┌────────────────────────────────────────┐
+# │ Blockchain: Identity Registration      │
+# │ Endorsement: Client + PolicyAdmin      │
+# │ Immutable: Device certificate stored   │
+# └────────────────────────────────────────┘
+
+# STEP 2: CLIENT requests access
+# ┌────────────────────────────────────────┐
+# │ Client (camera records, wants to view) │
+# │ • Sends ZKP (proves identity)          │
+# │ • Requests access to video001          │
+# └────────────────────────────────────────┘
+#              ↓ On-chain
+# ┌────────────────────────────────────────┐
+# │ Blockchain: Request Access Ticket      │
+# │ Endorsement: Client + PolicyAdmin +    │
+# │             AuditServer                │
+# │ Creates: Ticket ID (immutable)         │
+# │ Logs: Access attempt (for audit)       │
+# └────────────────────────────────────────┘
+
+# STEP 3: POLICY ADMIN evaluates
+# ┌────────────────────────────────────────┐
+# │ PolicyAdmin (off-chain)                │
+# │ • Checks client certificate validity   │
+# │ • Evaluates ZTA policy rules:          │
+# │   - Is device registered?              │
+# │   - Is user authorized?                │
+# │   - Is access within time window?      │
+# │   - Any anomalies detected?            │
+# └────────────────────────────────────────┘
+#              ↓ On-chain
+# ┌────────────────────────────────────────┐
+# │ Blockchain: Issue Access Ticket        │
+# │ Endorsement: PolicyAdmin + ServerAdmin │
+# │ Result: APPROVED or DENIED             │
+# │ Ticket: Valid for 24 hours             │
+# └────────────────────────────────────────┘
+
+# STEP 4: SERVER ADMIN handles data
+# ┌────────────────────────────────────────┐
+# │ ServerAdmin (off-chain)                │
+# │ • If APPROVED:                         │
+# │   - Retrieve encrypted video from IPFS │
+# │   - Verify IPFS hash matches blockchain│
+# │   - Send to client (over secure link)  │
+# └────────────────────────────────────────┘
+#              ↓ On-chain
+# ┌────────────────────────────────────────┐
+# │ Blockchain: Anchor IPFS Hash           │
+# │ Endorsement: ServerAdmin + AuditServer │
+# │ Creates: Immutable proof of content    │
+# │ Prevents: Content tampering            │
+# └────────────────────────────────────────┘
+
+# STEP 5: AUDIT SERVER tracks everything
+# ┌────────────────────────────────────────┐
+# │ AuditServer (off-chain)                │
+# │ • Runs ML anomaly detection            │
+# │ • Analyzes access patterns             │
+# │ • Flags suspicious behavior            │
+# │ • Prepares investigation reports       │
+# └────────────────────────────────────────┘
+#              ↓ On-chain
+# ┌────────────────────────────────────────┐
+# │ Blockchain: Audit Logs (immutable)     │
+# │ Contains: Every access attempt         │
+# │ Searchable: By timestamp, user, video  │
+# │ Legal: Admissible in court             │
+# └────────────────────────────────────────┘
+
+---
+
+# ============================================
+# OFF-CHAIN MICROSERVICES (Not on blockchain)
+# ============================================
+
+offchain_services:
+
+  # CLIENT SIDE (Edge device - Raspberry Pi 5)
+  client_services:
+    - name: face-blurring
+      technology: YOLOv11n
+      location: "On device (Raspberry Pi)"
+      inputs: "Live video feed"
+      outputs: "Blurred video, coordinates"
+      latency: "Real-time (18 FPS)"
+      privacy: "Never leaves device"
+      
+    - name: encryption
+      technology: "AES-256 (post-quantum ready)"
+      location: "On device"
+      inputs: "Blurred video, encryption key"
+      outputs: "Encrypted video"
+      privacy: "Key never leaves device"
+      
+    - name: zkp-generation
+      technology: "Zero-Knowledge Proof"
+      location: "On device"
+      inputs: "Client identity, access request"
+      outputs: "ZKP (proof of eligibility)"
+      benefit: "Proves identity without revealing it"
+
+  # POLICY ADMIN SIDE
+  policy_services:
+    - name: policy-evaluation
+      inputs: "Client cert, ZKP, access history"
+      outputs: "APPROVED or DENIED"
+      logic: "ZTA rules engine"
+      
+    - name: threat-analysis
+      inputs: "Client behavior history"
+      outputs: "Risk score, flags"
+      technology: "ML-based anomaly detection"
+      
+    - name: credential-generation
+      inputs: "Approved access request"
+      outputs: "Time-limited access token"
+      validity: "24 hours or less"
+
+  # SERVER ADMIN SIDE
+  server_services:
+    - name: ipfs-integration
+      inputs: "Encrypted video"
+      outputs: "IPFS CID (content hash)"
+      benefit: "Immutable storage, deduplication"
+      
+    - name: key-management
+      inputs: "Video + Client pubkey"
+      outputs: "Wrapped encryption key"
+      note: "Never stores unwrapped keys"
+      
+    - name: data-retrieval
+      inputs: "IPFS CID, client certificate"
+      outputs: "Encrypted video to client"
+      security: "TLS encryption in transit"
+
+  # AUDIT SIDE
+  audit_services:
+    - name: anomaly-detection
+      inputs: "Access logs, behavioral data"
+      outputs: "Anomaly alerts, risk scores"
+      technology: "ML algorithms"
+      
+    - name: threat-investigation
+      inputs: "Suspicious access pattern"
+      outputs: "Investigation report, findings"
+      compliance: "GDPR/CCPA compatible"
+      
+    - name: breach-detection
+      inputs: "System events, access attempts"
+      outputs: "Breach alerts, severity level"
+      response: "Can trigger immediate revocation"
+
+---
+
+# ============================================
+# DEPLOYMENT STRUCTURE
+# ============================================
+
+kubernetes_namespaces:
+  vault:
+    - Secret storage for all orgs
+    - Encrypted at rest
+    
+  clients-net:
+    - ca-client (issues certs to IoT devices)
+    - peer0-client (endorser)
+    - peer1-client (endorser)
+    - Role: Data requestors
+    
+  policy-admin-net:
+    - ca-policy-admin (issues certs to admins)
+    - peer0-policy-admin (endorser)
+    - peer1-policy-admin (endorser)
+    - Role: Policy decision makers
+    
+  server-admin-net:
+    - ca-server-admin (issues certs to servers)
+    - peer0-server-admin (endorser)
+    - peer1-server-admin (endorser)
+    - Role: Resource managers
+    
+  audit-server-net:
+    - ca-audit (issues certs to auditors)
+    - peer0-audit (endorser)
+    - peer1-audit (endorser)
+    - Role: Compliance & investigation
+    
+  orderer-net:
+    - orderer1 (creates blocks, shared)
+    - Neutral party, trusted by all
+
+---
+
+# ============================================
+# KEY CHARACTERISTICS
+# ============================================
+
+on_chain_guarantees:
+  - ✓ Identity verified: All device certificates checked
+  - ✓ Immutable logs: Every access logged forever
+  - ✓ Policy enforced: Can't bypass rules programmatically
+  - ✓ Tamper-proof: Blockchain prevents data alteration
+  - ✓ Transparent: All 4 stakeholders can verify
+  - ✓ Accountable: Complete audit trail
+
+off_chain_efficiency:
+  - ✓ Fast: Video processing not on blockchain
+  - ✓ Privacy: Raw videos never touch blockchain
+  - ✓ Flexible: ML algorithms can be updated
+  - ✓ Scalable: Can process unlimited videos
+  - ✓ Real-time: Face blurring at 18 FPS on Pi 5
+  - ✓ Smart: Anomaly detection without blockchain overhead
+
+zero_trust_principles:
+  - ✓ Never trust, always verify: Every request checked against policy
+  - ✓ Continuous verification: Tickets expire, must re-authenticate
+  - ✓ Least privilege: Minimal access, time-limited
+  - ✓ Assume breach: Audit logs enable rapid response
+  - ✓ Verify integrity: IPFS hashes on blockchain
+  - ✓ Segment access: Private data collections per role
+
+---
+
+# ============================================
+# CONFIGURATION CHECKLIST
+# ============================================
+
+before_deployment:
+  step_1: "Replace VAULT_ROOT_TOKEN with actual token"
+  step_2: "Replace GITHUB_PAT with Personal Access Token"
+  step_3: "Verify minikube is running: kubectl cluster-info"
+  step_4: "Ensure Vault is deployed: helm list -n vault"
+  step_5: "Verify GitHub repo access"
+  
+deployment_command: |
+  cd ~/fabric-video-privacy/bevel
+  source ../bevel-env/bin/activate
+  ansible-playbook platforms/shared/configuration/site.yaml \
+    --extra-vars "@../network.yaml"
+    
+post_deployment:
+  step_1: "Verify all pods running: kubectl get pods -A"
+  step_2: "Create channel: peer channel create"
+  step_3: "Join peers to channel"
+  step_4: "Install chaincode on all peers"
+  step_5: "Approve chaincode for each org"
+  step_6: "Commit chaincode to channel"
+  step_7: "Test with sample transactions"
+
+---
+
+# ============================================
+# TROUBLESHOOTING
+# ============================================
+
+common_issues:
+  vault_connection_failed:
+    cause: "Wrong root token or Vault not unsealed"
+    fix: "kubectl exec vault-0 -n vault -- vault status"
+    
+  github_push_failed:
+    cause: "Invalid Personal Access Token"
+    fix: "Generate new token with 'repo' scope at https://github.com/settings/tokens"
+    
+  peer_crashes:
+    cause: "Insufficient resources in minikube"
+    fix: "minikube stop && minikube start --memory=8192 --cpus=4"
+    
+  chaincode_install_failed:
+    cause: "Go dependencies not downloaded"
+    fix: "cd chaincode && go mod download && cd .."
+    
+  channel_creation_failed:
+    cause: "Orderer not ready or wrong orderer address"
+    fix: "kubectl logs -n orderer-net orderer1-xxx"
+
+---
+
+# END OF CONFIGURATION FILE
