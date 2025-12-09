@@ -1,11 +1,22 @@
-# Deploying the Privacy-First Network on Debian (Hyperledger Fabric, Kubernetes, Helm, Bevel, Vault)
+# Deploying the Privacy-First Network on Debian (Hyperledger Fabric, Kubernetes, Helm, Bevel, Vault, IPFS, API)
 ## Introduction
-- Hyperledger Fabric: Hyperledger Fabric is an open-source enterprise-grade permissioned distributed ledger technology (DLT) platform, designed for use in enterprise contexts, that delivers some key differentiating capabilities over other popular distributed ledger or blockchain platforms.
-- Kubernetes: Kubernetes is an open source container orchestration engine for automating deployment, scaling, and management of containerized applications. The open source project is hosted by the Cloud Native Computing Foundation (CNCF). 
-- Helm: Package manager for Kubernetes. 
-- Bevel: Hyperledger Bevel is a sophisticated automation framework designed for the deployment of production-ready Distributed Ledger Technology (DLT) networks across cloud infrastructures. (but we're doing cloud for now, so it just automates our DLT network).
-- Hashicorp Vault: Vault provides organizations with identity-based security to automatically authenticate and authorize access to secrets and other sensitive data.
+- **Hyperledger Fabric**: Hyperledger Fabric is an open-source enterprise-grade permissioned distributed ledger technology (DLT) platform, designed for use in enterprise contexts, that delivers some key differentiating capabilities over other popular distributed ledger or blockchain platforms.
+- **Kubernetes**: Kubernetes is an open source container orchestration engine for automating deployment, scaling, and management of containerized applications. The open source project is hosted by the Cloud Native Computing Foundation (CNCF). 
+- **Helm**: Package manager for Kubernetes. 
+- **Bevel**: Hyperledger Bevel is a sophisticated automation framework designed for the deployment of production-ready Distributed Ledger Technology (DLT) networks across cloud infrastructures. (but we're doing cloud for now, so it just automates our DLT network).
+- **Hashicorp Vault**: Vault provides organizations with identity-based security to automatically authenticate and authorize access to secrets and other sensitive data.
 
+### What runs on the Debian server?
+
+- 4 Organizations (Clients, PolicyAdmin, ServerAdmin, AuditServer)
+- 8 Peers (2 per organization)
+- 1 Orderer
+- 4 Certificate Authorities
+- Chaincode as a Service (CaaS)
+- API Backend 
+- IPFS node (for video storage)
+
+---
 
 ## Hyperledger Debian Instance Details
 | Property | Value |
