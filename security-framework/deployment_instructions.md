@@ -64,7 +64,7 @@
 (None specified)
 
 ## 0. Installing Requirements
-```console
+```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
 
@@ -109,13 +109,13 @@ minikube start --memory=8192 --cpus=4 --driver=docker
 
 ## 1 Minikube
 ### 1.1 Start Minikube
-```console
+```bash
 # Start minikube with enough resources for Hyperledger Fabric
 minikube start --memory=8192 --cpus=4 --disk-size=20g
 ```
 ### 1.2 Verify Minikube is working
 You should see an output like so:
-```console
+```bash
 penguinpal88@hyperledger-debian:~$ minikube start --memory=8192 --cpus=4 --disk-size=20g
 😄  minikube v1.37.0 on Debian 12.12 (amd64)
 ✨  Using the docker driver based on existing profile
@@ -130,7 +130,7 @@ penguinpal88@hyperledger-debian:~$ minikube start --memory=8192 --cpus=4 --disk-
 🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
 ```
 You can run the following commands to verify further.
-```console
+```bash
 penguinpal88@hyperledger-debian:~$ minikube status
 minikube
 type: Control Plane
@@ -150,7 +150,7 @@ minikube   Ready    control-plane   2d21h   v1.34.0
 ```
 
 ## 2. Make Project Directory
-```console
+```bash
 # If you have old project directory, remove it to start off clean
 rm -rf ~/fabric-video-privacy
 
@@ -162,7 +162,7 @@ cd ~/fabric-video-privacy
 ## 3. Setting up Hyperledger Bevel
 ### 3.1 Clone Hyperledger Bevel
 
-```console
+```bash
 cd ~/fabric-video-privacy
 
 # Clone Bevel
@@ -175,7 +175,7 @@ ls -la bevel/
 ### 3.2 Setup Python Virtual Environment
 You might have to run this installation command: `sudo apt install python3.11-venv`
 
-```console
+```bash
 cd ~/fabric-video-privacy
 
 # Create virtual environment
@@ -192,7 +192,7 @@ which python
 ### 3.3 Install Bevel Requirements
 After you've created your virtual environment, install requirements for Bevel.
 
-```console
+```bash
 # Move to where the requirements are stored
 cd ~/fabric-video-privacy/bevel/docs
 
@@ -218,7 +218,7 @@ Collecting jinja2>=3.1
 
 ## 4. Vault
 ### 4.1 Install Vault
-```console
+```bash
 # Add Hashicorp Helm repo
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm repo update
@@ -232,7 +232,7 @@ helm install vault hashicorp/vault \
 You can read more on Vault [here](https://developer.hashicorp.com/vault/docs).
 
 ### 4.2 Initialize Vault
-```console
+```bash
 # Initialize Vault and save credentials
 kubectl exec vault-0 -n vault -- vault operator init \
   -key-shares=1 \
@@ -243,7 +243,7 @@ cat ~/fabric-video-privacy/vault-credentials.txt
 ```
 You should see an output like this:
 
-```console
+```bash
 # Your unseal key 1 and initial root key will be above this wall of text.
 
 Vault initialized with 1 key shares and a key threshold of 1. Please securely
@@ -258,7 +258,7 @@ It is possible to generate new unseal keys, provided you have a quorum of existi
 ```
 
 Later, you can verify that the vault is unsealed/sealed if you want. We just initialized it and grabbed our keys so it's sealed; this command might come in handy later.
-```console
+```bash
 # Verify Vault is unsealed
 kubectl exec vault-0 -n vault -- vault status
 ```
@@ -266,7 +266,7 @@ kubectl exec vault-0 -n vault -- vault status
 Be sure to save these tokens: **you will need it.**
 
 ### 4.3 Unseal Vault
-```console
+```bash
 # Read the file, although you should've saved it somewhere before this.
 cat ~/fabric-video-privacy/vault-credentials.txt
 
@@ -275,7 +275,7 @@ kubectl exec vault-0 -n vault -- vault operator unseal <paste-key-here>
 ```
 
 You should see an output like this: 
-```console
+```bash
 (bevel-env) penguinpal88@hyperledger-debian:~/fabric-video-privacy/bevel/docs$ kubectl exec vault-0 -n vault -- vault operator unseal <MY_KEY>
 Key             Value
 ---             -----
@@ -293,7 +293,7 @@ HA Enabled      false
 ```
 
 ## 5 Setup Git Repository for Bevel
-```console
+```bash
 # Make the releases repo if you don't have it
 mkdir ~/fabric-video-privacy/releases
 cd ~/fabric-video-privacy/releases
@@ -321,8 +321,11 @@ git commit -m "Initial Bevel structure"
 git remote -v
 ```
 
-## 6. Create network.yaml
-```console
+## 6. network.yaml
+Hyperledger Bevel uses a `network.yaml` file to set up the Hyperledger Fabric network.
+
+### 6.1 Create network.yaml
+```bash
 cd ~/fabric-video-privacy
 
 # Create network.yaml, use vim if you're not a noob
@@ -333,3 +336,33 @@ I made a network.yaml file already. It has:
 - All 4 organizations (Clients, PolicyAdmin, ServerAdmin, AuditServer)
 - Complete consortium and channel definitions
 - All 7 endorsement policies
+
+You can find it in this repository under `security-framework/network.yaml`.
+
+### 6.2 Editing network.yaml
+There are some placeholder tokens in `network.yaml`; we need to replace them. Use `vim` or `nano`.
+
+You can verify they've been replaced using this command:
+```bash
+# Check that tokens were replaced (should show your actual tokens)
+grep "root_token:" network.yaml | head -1
+grep "password:" network.yaml | head -1
+```
+Once you've replaced the placeholder keys, it's time to _finally_ deploy the Fabric network with Bevel.
+
+## 7. Deploying Hyperledger Fabric
+```bash
+# Make sure you're in the bevel directory with venv activated. You should have already done this. If not, run it again and pray nothing broke.
+cd ~/fabric-video-privacy/bevel
+source ../bevel-env/bin/activate
+
+# Run Bevel deployment (this will take 15-30 minutes)
+ansible-playbook platforms/shared/configuration/site.yaml \
+  --extra-vars "@../network.yaml"
+```
+
+While it's running, you can monitor in another terminal:
+```bash
+# Open a new terminal and watch pods being created
+watch kubectl get pods --all-namespaces
+```
