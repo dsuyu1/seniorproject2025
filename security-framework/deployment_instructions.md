@@ -228,12 +228,6 @@ helm install vault hashicorp/vault \
   --namespace vault \
   --create-namespace \
   --set server.dataStorage.size=2Gi
-
-# Wait for Vault pod to be ready (takes 1-2 minutes)
-kubectl wait --for=condition=ready pod \
-  -l app.kubernetes.io/name=vault \
-  -n vault \
-  --timeout=300s
 ```
 You can read more on Vault [here](https://developer.hashicorp.com/vault/docs).
 
@@ -247,21 +241,95 @@ kubectl exec vault-0 -n vault -- vault operator init \
 # View the credentials (IMPORTANT - save these!)
 cat ~/fabric-video-privacy/vault-credentials.txt
 ```
+You should see an output like this:
 
-### 4.3 Unseal Vault
 ```console
-# Extract unseal key and unseal Vault
-UNSEAL_KEY=$(grep "Unseal Key 1:" ~/fabric-video-privacy/vault-credentials.txt | awk '{print $4}')
-kubectl exec vault-0 -n vault -- vault operator unseal $UNSEAL_KEY
+# Your unseal key 1 and initial root key will be above this wall of text.
 
+Vault initialized with 1 key shares and a key threshold of 1. Please securely
+distribute the key shares printed above. When the Vault is re-sealed,
+restarted, or stopped, you must supply at least 1 of these keys to unseal it
+before it can start servicing requests.
+
+Vault does not store the generated root key. Without at least 1 keys to
+reconstruct the root key, Vault will remain permanently sealed!
+
+It is possible to generate new unseal keys, provided you have a quorum of existing unseal keys shares. See "vault operator rekey" for more information.    
+```
+
+Later, you can verify that the vault is unsealed/sealed if you want. We just initialized it and grabbed our keys so it's sealed; this command might come in handy later.
+```console
 # Verify Vault is unsealed
 kubectl exec vault-0 -n vault -- vault status
 ```
 
-### 4.4 Get Your Root Token
+Be sure to save these tokens: **you will need it.**
+
+### 4.3 Unseal Vault
 ```console
-# Extract root token (you'll need this for network.yaml)
-VAULT_ROOT_TOKEN=$(grep "Initial Root Token:" ~/fabric-video-privacy/vault-credentials.txt | awk '{print $4}')
-echo "Your Vault Root Token: $VAULT_ROOT_TOKEN"
+# Read the file, although you should've saved it somewhere before this.
+cat ~/fabric-video-privacy/vault-credentials.txt
+
+# Copy the unseal key and paste it here
+kubectl exec vault-0 -n vault -- vault operator unseal <paste-key-here>
 ```
-Be sure to save this token: **you will need it.**
+
+You should see an output like this: 
+```console
+(bevel-env) penguinpal88@hyperledger-debian:~/fabric-video-privacy/bevel/docs$ kubectl exec vault-0 -n vault -- vault operator unseal <MY_KEY>
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    1
+Threshold       1
+Version         1.20.4
+Build Date      2025-09-23T13:22:38Z
+Storage Type    file
+Cluster Name    vault-cluster-83d99449
+Cluster ID      ba035ae2-45c4-2f42-cfc4-66136a1cde19
+HA Enabled      false
+```
+
+## 5 Setup Git Repository for Bevel
+```console
+# Make the releases repo if you don't have it
+mkdir ~/fabric-video-privacy/releases
+cd ~/fabric-video-privacy/releases
+
+# Initialize git
+git init
+
+# Configure git
+git config user.email <EMAIL>
+git config user.name <USER.NAME>
+
+# Add remote
+git remote add origin https://github.com/dsuyu1/seniorproject2025.git
+
+# Create directory structure for Bevel
+mkdir -p platforms/hyperledger-fabric/releases/dev
+mkdir -p platforms/hyperledger-fabric/charts
+
+# Create initial commit
+touch .gitkeep
+git add .
+git commit -m "Initial Bevel structure"
+
+# Verify
+git remote -v
+```
+
+## 6. Create network.yaml
+```console
+cd ~/fabric-video-privacy
+
+# Create network.yaml, use vim if you're not a noob
+nano network.yaml
+```
+
+I made a network.yaml file already. It has:
+- All 4 organizations (Clients, PolicyAdmin, ServerAdmin, AuditServer)
+- Complete consortium and channel definitions
+- All 7 endorsement policies
