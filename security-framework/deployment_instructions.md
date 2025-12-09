@@ -1,8 +1,5 @@
 # Deploying the Privacy-First Network (Hyperledger, Kubernetes, Helm, Bevel, Vault)
 ## Hyperledger Debian Instance Details
-
-### Basic Information
-
 | Property | Value |
 |----------|-------|
 | Name | hyperledger-debian |
@@ -66,9 +63,7 @@
 
 (None specified)
 
-## Requirements
-First, install requirements:
-
+## 0. Installing Requirements
 ```console
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -112,12 +107,13 @@ minikube start --memory=8192 --cpus=4 --driver=docker
 ```
 
 
-## 1. Start Minikube
+## 1 Minikube
+### 1.1 Start Minikube
 ```console
 # Start minikube with enough resources for Hyperledger Fabric
 minikube start --memory=8192 --cpus=4 --disk-size=20g
 ```
-### 1.1 Verify Minikube is working
+### 1.2 Verify Minikube is working
 You should see an output like so:
 ```console
 penguinpal88@hyperledger-debian:~$ minikube start --memory=8192 --cpus=4 --disk-size=20g
@@ -163,7 +159,9 @@ mkdir -p ~/fabric-video-privacy
 cd ~/fabric-video-privacy
 ```
 
-## 3. Clone Hyperledger Bevel
+## 3. Setting up Hyperledger Bevel
+### 3.1 Clone Hyperledger Bevel
+
 ```console
 cd ~/fabric-video-privacy
 
@@ -174,7 +172,7 @@ git clone https://github.com/hyperledger-bevel/bevel.git
 ls -la bevel/
 ```
 
-## 4. Setup Python Virtual Environment
+### 3.2 Setup Python Virtual Environment
 You might have to run this installation command: `sudo apt install python3.11-venv`
 
 ```console
@@ -191,4 +189,79 @@ source bevel-env/bin/activate
 which python
 ```
 
+### 3.3 Install Bevel Requirements
+After you've created your virtual environment, install requirements for Bevel.
 
+```console
+# Move to where the requirements are stored
+cd ~/fabric-video-privacy/bevel/docs
+
+(bevel-env) penguinpal88@hyperledger-debian:~/fabric-video-privacy/bevel/docs$ pip install -r pip-requirements.txt
+Collecting mkdocs-material
+  Downloading mkdocs_material-9.7.0-py3-none-any.whl (9.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.3/9.3 MB 63.6 MB/s eta 0:00:00
+Collecting mike
+  Downloading mike-2.1.3-py3-none-any.whl (33 kB)
+Collecting babel>=2.10
+  Downloading babel-2.17.0-py3-none-any.whl (10.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.2/10.2 MB 110.2 MB/s eta 0:00:00
+Collecting backrefs>=5.7.post1
+  Downloading backrefs-6.1-py311-none-any.whl (392 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 392.9/392.9 kB 73.8 MB/s eta 0:00:00
+Collecting colorama>=0.4
+  Downloading colorama-0.4.6-py2.py3-none-any.whl (25 kB)
+Collecting jinja2>=3.1
+  Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 134.9/134.9 kB 39.3 MB/s eta 0:00:00
+...
+```
+
+## 4. Vault
+### 4.1 Install Vault
+```console
+# Add Hashicorp Helm repo
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update
+
+# Install Vault
+helm install vault hashicorp/vault \
+  --namespace vault \
+  --create-namespace \
+  --set server.dataStorage.size=2Gi
+
+# Wait for Vault pod to be ready (takes 1-2 minutes)
+kubectl wait --for=condition=ready pod \
+  -l app.kubernetes.io/name=vault \
+  -n vault \
+  --timeout=300s
+```
+You can read more on Vault [here](https://developer.hashicorp.com/vault/docs).
+
+### 4.2 Initialize Vault
+```console
+# Initialize Vault and save credentials
+kubectl exec vault-0 -n vault -- vault operator init \
+  -key-shares=1 \
+  -key-threshold=1 > ~/fabric-video-privacy/vault-credentials.txt
+
+# View the credentials (IMPORTANT - save these!)
+cat ~/fabric-video-privacy/vault-credentials.txt
+```
+
+### 4.3 Unseal Vault
+```console
+# Extract unseal key and unseal Vault
+UNSEAL_KEY=$(grep "Unseal Key 1:" ~/fabric-video-privacy/vault-credentials.txt | awk '{print $4}')
+kubectl exec vault-0 -n vault -- vault operator unseal $UNSEAL_KEY
+
+# Verify Vault is unsealed
+kubectl exec vault-0 -n vault -- vault status
+```
+
+### 4.4 Get Your Root Token
+```console
+# Extract root token (you'll need this for network.yaml)
+VAULT_ROOT_TOKEN=$(grep "Initial Root Token:" ~/fabric-video-privacy/vault-credentials.txt | awk '{print $4}')
+echo "Your Vault Root Token: $VAULT_ROOT_TOKEN"
+```
+Be sure to save this token: **you will need it.**
