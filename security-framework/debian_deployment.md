@@ -310,7 +310,7 @@ Cluster ID      ba035ae2-45c4-2f42-cfc4-66136a1cde19
 HA Enabled      false
 ```
 
-## 5 Setup Git Repository for Bevel
+## 5. Setup Git Repository for Bevel
 ```bash
 # Make the releases repo if you don't have it
 mkdir ~/fabric-video-privacy/releases
