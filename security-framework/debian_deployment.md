@@ -192,7 +192,6 @@ ls -la bevel/
 ```
 
 ### 3.2 Setup Python Virtual Environment
-You might have to run this installation command: `sudo apt install python3.11-venv`
 
 ```bash
 cd ~/fabric-video-privacy
