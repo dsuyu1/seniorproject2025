@@ -122,6 +122,7 @@ sudo apt install -y git
 sudo apt install -y build-essential
 
 # Start minikube
+# you might need to allocate less memory if your computer has less than 8GB
 minikube start --memory=8192 --cpus=4 --driver=docker
 ```
 
