@@ -251,33 +251,29 @@ You can read more on Vault [here](https://developer.hashicorp.com/vault/docs).
 
 ### 4.2 Initialize Vault
 ```bash
-# Initialize Vault and save credentials
-kubectl exec vault-0 -n vault -- vault operator init \
-  -key-shares=1 \
-  -key-threshold=1 > ~/fabric-video-privacy/vault-credentials.txt
+# Initialize and unseal Vault
+kubectl exec -it vault-0 -n vault -- vault operator init
 
-# View the credentials (IMPORTANT - save these!)
-cat ~/fabric-video-privacy/vault-credentials.txt
+# Save the credentials it pops out!
 ```
 You should see an output like this:
 
 ```bash
-# Your unseal key 1 and initial root key will be above this wall of text.
-
-Vault initialized with 1 key shares and a key threshold of 1. Please securely
+Vault initialized with 5 key shares and a key threshold of 3. Please securely
 distribute the key shares printed above. When the Vault is re-sealed,
-restarted, or stopped, you must supply at least 1 of these keys to unseal it
+restarted, or stopped, you must supply at least 3 of these keys to unseal it
 before it can start servicing requests.
 
-Vault does not store the generated root key. Without at least 1 keys to
+Vault does not store the generated root key. Without at least 3 keys to
 reconstruct the root key, Vault will remain permanently sealed!
 
-It is possible to generate new unseal keys, provided you have a quorum of existing unseal keys shares. See "vault operator rekey" for more information.    
+It is possible to generate new unseal keys, provided you have a quorum of
+existing unseal keys shares. See "vault operator rekey" for more information.  
 ```
 
 Later, you can verify that the vault is unsealed/sealed if you want. We just initialized it and grabbed our keys so it's sealed; this command might come in handy later.
 ```bash
-# Verify Vault is unsealed
+# Verify Vault is sealed
 kubectl exec vault-0 -n vault -- vault status
 ```
 
@@ -285,12 +281,10 @@ Be sure to save these tokens: **you will need it.**
 
 ### 4.3 Unseal Vault
 ```bash
-# Read the file, although you should've saved it somewhere before this.
-cat ~/fabric-video-privacy/vault-credentials.txt
-
 # Copy the unseal key and paste it here
 kubectl exec vault-0 -n vault -- vault operator unseal <paste-key-here>
 ```
+If you generated 5 keys, you'll need to use 3 to unlock the vault.
 
 You should see an output like this: 
 ```bash
