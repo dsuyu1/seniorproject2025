@@ -368,6 +368,9 @@ Once you've replaced the placeholder keys, it's time to _finally_ deploy the Fab
 cd ~/fabric-video-privacy/bevel
 source ../bevel-env/bin/activate
 
+# You should make sure ansible is installed before
+pip install ansible
+
 # Run Bevel deployment (this will take 15-30 minutes)
 ansible-playbook platforms/shared/configuration/site.yaml \
   --extra-vars "@../network.yaml"
