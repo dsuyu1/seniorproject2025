@@ -1,0 +1,106 @@
+apiVersion: hlf.kungfusoftware.es/v1alpha1
+kind: FabricPeer
+metadata:
+  name: org1-peer1
+spec:
+  image: hyperledger/fabric-peer
+  tag: "2.4.6"
+  mspID: Org1MSP
+  stateDb: couchdb
+  external_chaincode_builder: false
+  couchdb:
+    user: couchdb
+    password: couchdb
+    image: couchdb
+    tag: "3.1.1"
+  externalEndpoint: peer1-org1.localho.st:443
+  discovery:
+    period: 60s
+    touchPeriod: 60s
+  logging:
+    level: info
+    peer: info
+    cauthdsl: info
+    gossip: info
+    grpc: info
+    ledger: info
+    msp: info
+    policies: info
+  gossip:
+    externalEndpoint: peer1-org1.localho.st:443
+    bootstrap: ""
+    endpoint: ""
+    useLeaderElection: false
+    orgLeader: true
+  hosts:
+    - peer1-org1.localho.st
+  istio:
+    port: 443
+    ingressGateway: ingressgateway
+    hosts:
+      - peer1-org1.localho.st
+  externalBuilders:
+    - name: ccaas_builder
+      path: /opt/hyperledger/ccaas_builder
+      propagateEnvironment:
+        - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG
+  secret:
+    enrollment:
+      component:
+        cahost: org1-ca.localho.st
+        caname: ca
+        caport: 443
+        catls:
+          cacert: ""
+        enrollid: peer
+        enrollsecret: peerpw
+      tls:
+        cahost: org1-ca.localho.st
+        caname: tlsca
+        caport: 443
+        catls:
+          cacert: ""
+        csr:
+          hosts:
+            - peer1-org1.localho.st
+            - localhost
+          cn: ""
+        enrollid: peer
+        enrollsecret: peerpw
+  service:
+    type: ClusterIP
+  storage:
+    peer:
+      size: 5Gi
+      storageClass: standard
+      accessMode: ReadWriteOnce
+    couchdb:
+      size: 5Gi
+      storageClass: standard
+      accessMode: ReadWriteOnce
+    chaincode:
+      size: 5Gi
+      storageClass: standard
+      accessMode: ReadWriteOnce
+  resources:
+    peer:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    couchdb:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 1
+        memory: 1Gi
+    chaincode:
+      requests:
+        cpu: 10m
+        memory: 10Mi
+      limits:
+        cpu: 1
+        memory: 100Mi

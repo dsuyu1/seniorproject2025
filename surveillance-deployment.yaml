@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: surveillance
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: surveillance
+  template:
+    metadata:
+      labels:
+        app: surveillance
+    spec:
+      containers:
+      - name: chaincode
+        image: dsuyu1/surveillance-chaincode:1.0
+        ports:
+        - containerPort: 7052
+          name: chaincode
+        env:
+        - name: CHAINCODE_SERVER_ADDRESS
+          value: "0.0.0.0:7052"
+        - name: CHAINCODE_ID
+          value: "surveillance_1.0:2f40a4e59cbe9b2e928601791d6424f47b3d14775d099bbcd7bc5ec924c7ad6a"
+        command:
+        - "node_modules/.bin/fabric-chaincode-node"
+        args:
+        - "server"
+        - "--chaincode-address=0.0.0.0:7052"
+        - "--chaincode-id=surveillance_1.0:2f40a4e59cbe9b2e928601791d6424f47b3d14775d099bbcd7bc5ec924c7ad6a"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: surveillance
+  namespace: default
+spec:
+  ports:
+  - port: 7052
+    targetPort: 7052
+    protocol: TCP
+    name: chaincode
+  selector:
+    app: surveillance
+  type: ClusterIP
